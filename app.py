@@ -546,47 +546,47 @@ with tab2:
         st.session_state["horas_mes_total"] = horas_mes_total
 
     with col_etapas:
-        st.markdown("<div class='rw-section'>Etapas da Consultoria</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='rw-info'><p>Adicione as etapas e distribua as horas por consultor.</p></div>", unsafe_allow_html=True)
-
-        with st.expander("➕  Nova Etapa", expanded=len(st.session_state["etapas"])==0):
-            ne_nome = st.text_input("Nome da etapa", key="ne_nome", placeholder="Ex: Diagnóstico Inicial")
-            ne_desc = st.text_input("Descrição (opcional)", key="ne_desc", placeholder="Ex: Levantamento documental")
-            st.markdown(f"<p style='color:{CREAM};font-weight:600;margin:8px 0 4px 0;'>Horas por consultor:</p>", unsafe_allow_html=True)
-            ne_horas = {}
-            for c in st.session_state["consultores"]:
-                ne_horas[c["nome"]] = st.number_input(f"{c['nome']} (h)", min_value=0.0, step=1.0, key=f"ne_h_{c['nome']}", format="%.1f")
-            if st.button("Adicionar Etapa", key="add_etapa"):
-                if ne_nome.strip():
-                    st.session_state["etapas"].append({"nome": ne_nome, "descricao": ne_desc, "horas": ne_horas.copy()})
-                    st.rerun()
+        st.markdown("<div class='rw-section'>Nova Etapa</div>", unsafe_allow_html=True)
+        ne_nome = st.text_input("Nome da etapa", key="ne_nome", placeholder="Ex: Diagnóstico Inicial")
+        ne_desc = st.text_input("Descrição (opcional)", key="ne_desc", placeholder="Ex: Levantamento documental")
+        st.caption("Horas por consultor:")
+        ne_horas = {}
+        for c in st.session_state["consultores"]:
+            ne_horas[c["nome"]] = st.number_input(
+                f"{c['nome']} (h)", min_value=0.0, step=1.0,
+                key=f"ne_h_{c['nome']}", format="%.1f")
+        if st.button("Adicionar Etapa", key="add_etapa"):
+            if ne_nome.strip():
+                st.session_state["etapas"].append(
+                    {"nome": ne_nome, "descricao": ne_desc, "horas": ne_horas.copy()})
+                st.rerun()
 
         if st.session_state["etapas"]:
-            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("<div class='rw-section'>Etapas Adicionadas</div>", unsafe_allow_html=True)
             etapas_manter = []
             for i, e in enumerate(st.session_state["etapas"]):
                 horas_e = sum(e["horas"].get(c["nome"],0) for c in st.session_state["consultores"])
                 valor_e = sum(e["horas"].get(c["nome"],0)*c["valor_hora"] for c in st.session_state["consultores"])
                 ca, cb = st.columns([5,1])
                 with ca:
-                    badges = "".join([f"<span class='badge'>{c['nome']}: {e['horas'].get(c['nome'],0):.0f}h</span>"
-                                      for c in st.session_state["consultores"] if e["horas"].get(c["nome"],0)>0])
+                    badges = "".join([
+                        f"<span class='badge'>{c['nome']}: {e['horas'].get(c['nome'],0):.0f}h</span>"
+                        for c in st.session_state["consultores"] if e["horas"].get(c["nome"],0)>0])
                     st.markdown(
                         f"<div class='rw-card'>"
                         f"<p style='color:{WHITE};font-weight:700;margin:0;'>{i+1}. {e['nome']}</p>"
                         f"<p style='color:{CREAM};font-size:0.85em;margin:2px 0 6px 0;'>{e.get('descricao','')}</p>"
                         f"{badges}"
                         f"<p style='color:{CREAM};margin:8px 0 0 0;font-size:0.85em;'>"
-                        f"Total: <b style='color:{WHITE};'>{horas_e:.0f}h</b>  ·  "
+                        f"Total: <b style='color:{WHITE};'>{horas_e:.0f}h</b>  · "
                         f"Valor: <b style='color:{WHITE};'>{fmt(valor_e)}</b></p>"
                         f"</div>", unsafe_allow_html=True)
                 with cb:
-                    st.markdown("<br><br>", unsafe_allow_html=True)
+                    st.write("")
+                    st.write("")
                     if not st.button("Remover", key=f"del_etapa_{i}"):
                         etapas_manter.append(e)
             st.session_state["etapas"] = etapas_manter
-        else:
-            st.markdown(f"<div class='rw-info'><p>Nenhuma etapa adicionada ainda.</p></div>", unsafe_allow_html=True)
 
 with tab3:
     consultores   = st.session_state["consultores"]
