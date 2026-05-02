@@ -34,14 +34,14 @@ LOGO_V = os.path.join(BASE, "assets", "logo_redwood_vertical.png")
 FIB    = os.path.join(BASE, "assets", "fibonacci.png")
 
 st.markdown(f"""
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons&display=block');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block');
 
 /* Garante que classes de ícones do Streamlit usem a fonte certa (corrige texto "keyboard_double_arrow_left", "arrow_drop_down" etc.) */
 .material-icons, .material-icons-outlined,
@@ -90,12 +90,29 @@ st.markdown(f"""
     margin: 14px 0 !important;
 }}
 
-/* Esconde botão de colapsar sidebar quando aparece como texto cru */
-[data-testid="stSidebarCollapseButton"] svg,
-[data-testid="collapsedControl"] svg,
-button[kind="header"] svg {{ display: inline-block !important; }}
-[data-testid="stSidebarCollapseButton"]::before,
-[data-testid="collapsedControl"]::before {{ content: '' !important; }}
+/* Garante que botões de colapso usem o ícone correto */
+[data-testid="stSidebarCollapseButton"] *,
+[data-testid="collapsedControl"] *,
+button[kind="header"] *,
+[data-testid="stSidebarHeader"] * {{
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Material Icons', sans-serif !important;
+    font-feature-settings: 'liga' on !important;
+    -webkit-font-feature-settings: 'liga' on !important;
+}}
+/* Fallback: torna invisível texto cru de ícones se o nome aparece em forma extensa  */
+span[data-testid="stIconMaterial"] {{
+    font-family: 'Material Symbols Rounded' !important;
+    font-feature-settings: 'liga' !important;
+}}
+
+/* Wrapper do fibonacci no sidebar — deixa discreto e centralizado */
+.rw-fib-wrap {{
+    opacity: 0.28;
+    margin: 8px auto 4px auto;
+    filter: drop-shadow(0 0 6px {RUST}33);
+    transition: opacity 0.3s ease;
+}}
+.rw-fib-wrap:hover {{ opacity: 0.55; }}
 
 /* Tabs — mais polidas, com gradiente e indicador */
 .stTabs [data-baseweb="tab-list"] {{
@@ -862,9 +879,11 @@ with st.sidebar:
     if os.path.exists(LOGO_H):
         st.image(LOGO_H, use_container_width=True)
     if os.path.exists(FIB):
-        st.markdown("<div style='opacity:0.35;margin-top:4px;'>", unsafe_allow_html=True)
-        st.image(FIB, use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        c1, c2, c3 = st.columns([1, 4, 1])
+        with c2:
+            st.markdown("<div class='rw-fib-wrap'>", unsafe_allow_html=True)
+            st.image(FIB, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("---")
     st.markdown(f"<p style='color:{CREAM};font-size:0.85em;text-align:center;'>Precificação de Projetos</p>", unsafe_allow_html=True)
     st.markdown("---")
