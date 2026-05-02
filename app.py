@@ -34,59 +34,368 @@ LOGO_V = os.path.join(BASE, "assets", "logo_redwood_vertical.png")
 FIB    = os.path.join(BASE, "assets", "fibonacci.png")
 
 st.markdown(f"""
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&display=swap');
-*, body {{ font-family: 'Figtree', sans-serif !important; }}
-.stApp, .main, [data-testid="stAppViewContainer"] {{ background-color: {NAVY} !important; }}
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
+/* Garante que classes de ícones do Streamlit usem a fonte certa (corrige texto "keyboard_double_arrow_left", "arrow_drop_down" etc.) */
+.material-icons, .material-icons-outlined,
+.material-symbols-outlined, .material-symbols-rounded,
+[class*="material-symbols"], [class*="material-icons"] {{
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Material Icons' !important;
+    font-feature-settings: 'liga' !important;
+    -webkit-font-feature-settings: 'liga' !important;
+    font-style: normal !important;
+    font-weight: normal !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    display: inline-block !important;
+    white-space: nowrap !important;
+    word-wrap: normal !important;
+    direction: ltr !important;
+    -webkit-font-smoothing: antialiased !important;
+}}
+
+*, body {{ font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important; }}
+.material-icons, .material-icons-outlined,
+.material-symbols-outlined, .material-symbols-rounded {{
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Material Icons' !important;
+}}
+
+/* Background app com gradiente sutil */
+.stApp, .main, [data-testid="stAppViewContainer"] {{
+    background:
+        radial-gradient(ellipse at top left, {LNAVY}99 0%, transparent 50%),
+        radial-gradient(ellipse at bottom right, {RUST}22 0%, transparent 50%),
+        {NAVY} !important;
+    background-attachment: fixed !important;
+}}
+
+/* Sidebar com gradiente refinado */
 [data-testid="stSidebar"] {{
-    background: linear-gradient(180deg, {LNAVY} 0%, {NAVY} 100%) !important;
-    border-right: 2px solid {RUST}55 !important;
+    background: linear-gradient(180deg, {LNAVY} 0%, {NAVY} 60%, {NAVY} 100%) !important;
+    border-right: 1px solid {RUST}33 !important;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.3) !important;
 }}
 [data-testid="stSidebar"] * {{ color: {WHITE} !important; }}
-.stTabs [data-baseweb="tab-list"] {{ background-color:{LNAVY}; border-radius:12px; padding:6px; gap:4px; }}
-.stTabs [data-baseweb="tab"] {{ color:{CREAM} !important; background-color:transparent; border-radius:8px; font-weight:500; padding:8px 14px; }}
-.stTabs [aria-selected="true"] {{ background:linear-gradient(135deg,{RUST},{RUST2}) !important; color:{WHITE} !important; font-weight:600; }}
-.stTabs [data-baseweb="tab-panel"] {{ background-color:transparent; padding-top:20px; }}
-.stNumberInput input, .stTextInput input, .stTextArea textarea {{
-    background-color:{LNAVY} !important; color:{WHITE} !important;
-    border:1px solid {RUST}66 !important; border-radius:8px !important;
+[data-testid="stSidebar"] hr {{
+    border: none !important;
+    height: 1px !important;
+    background: linear-gradient(90deg, transparent, {RUST}66, transparent) !important;
+    margin: 14px 0 !important;
 }}
-.stNumberInput label, .stTextInput label, .stTextArea label, .stSelectbox label, .stSlider label {{
-    color:{CREAM} !important; font-weight:500 !important;
+
+/* Esconde botão de colapsar sidebar quando aparece como texto cru */
+[data-testid="stSidebarCollapseButton"] svg,
+[data-testid="collapsedControl"] svg,
+button[kind="header"] svg {{ display: inline-block !important; }}
+[data-testid="stSidebarCollapseButton"]::before,
+[data-testid="collapsedControl"]::before {{ content: '' !important; }}
+
+/* Tabs — mais polidas, com gradiente e indicador */
+.stTabs [data-baseweb="tab-list"] {{
+    background: linear-gradient(135deg, {LNAVY}, {CARD}) !important;
+    border: 1px solid {RUST}33 !important;
+    border-radius: 14px !important;
+    padding: 6px !important;
+    gap: 4px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
+}}
+.stTabs [data-baseweb="tab"] {{
+    color: {CREAM} !important;
+    background-color: transparent !important;
+    border-radius: 10px !important;
+    font-weight: 500 !important;
+    padding: 10px 18px !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}}
+.stTabs [data-baseweb="tab"]:hover {{
+    background: {RUST}22 !important;
+    color: {WHITE} !important;
+}}
+.stTabs [aria-selected="true"] {{
+    background: linear-gradient(135deg, {RUST}, {RUST2}) !important;
+    color: {WHITE} !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 16px {RUST}66 !important;
+}}
+.stTabs [data-baseweb="tab-panel"] {{ background-color: transparent !important; padding-top: 24px !important; }}
+.stTabs [data-baseweb="tab-highlight"] {{ display: none !important; }}
+
+/* Inputs — focus com glow */
+.stNumberInput input, .stTextInput input, .stTextArea textarea {{
+    background-color: {LNAVY} !important;
+    color: {WHITE} !important;
+    border: 1px solid {RUST}55 !important;
+    border-radius: 10px !important;
+    padding: 10px 14px !important;
+    transition: all 0.2s ease !important;
+}}
+.stNumberInput input:focus, .stTextInput input:focus, .stTextArea textarea:focus {{
+    border-color: {RUST} !important;
+    box-shadow: 0 0 0 3px {RUST}33 !important;
+    outline: none !important;
+}}
+.stNumberInput label, .stTextInput label, .stTextArea label,
+.stSelectbox label, .stSlider label {{
+    color: {CREAM} !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.2px !important;
 }}
 div[data-testid="stSelectbox"] > div > div {{
-    background-color:{LNAVY} !important; color:{WHITE} !important;
-    border:1px solid {RUST}66 !important; border-radius:8px !important;
+    background-color: {LNAVY} !important;
+    color: {WHITE} !important;
+    border: 1px solid {RUST}55 !important;
+    border-radius: 10px !important;
 }}
-.stButton > button {{
-    background:linear-gradient(135deg,{RUST},{RUST2}) !important;
-    color:{WHITE} !important; border:none !important; border-radius:10px !important;
-    font-weight:700 !important; font-size:0.95rem !important;
-    padding:10px 20px !important; width:100% !important;
+
+/* Slider — track e thumb com cores da marca */
+.stSlider [data-baseweb="slider"] [role="slider"] {{
+    background: {RUST} !important;
+    border: 2px solid {WHITE} !important;
+    box-shadow: 0 2px 8px {RUST}88 !important;
 }}
-.stButton > button:hover {{ opacity:0.88 !important; }}
+.stSlider [data-baseweb="slider"] > div:nth-child(2) > div:first-child {{
+    background: linear-gradient(90deg, {RUST}, {RUST2}) !important;
+}}
+
+/* Botões — visualmente impecáveis */
+.stButton > button, .stDownloadButton > button {{
+    background: linear-gradient(135deg, {RUST} 0%, {RUST2} 100%) !important;
+    color: {WHITE} !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    padding: 12px 22px !important;
+    width: 100% !important;
+    letter-spacing: 0.3px !important;
+    box-shadow:
+        0 4px 14px {RUST}55,
+        0 1px 0 rgba(255,255,255,0.1) inset !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}}
+.stButton > button::before, .stDownloadButton > button::before {{
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important; left: -100% !important;
+    width: 100% !important; height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent) !important;
+    transition: left 0.5s !important;
+}}
+.stButton > button:hover, .stDownloadButton > button:hover {{
+    transform: translateY(-2px) !important;
+    box-shadow:
+        0 8px 24px {RUST}88,
+        0 1px 0 rgba(255,255,255,0.15) inset !important;
+    filter: brightness(1.08) !important;
+}}
+.stButton > button:hover::before, .stDownloadButton > button:hover::before {{ left: 100% !important; }}
+.stButton > button:active, .stDownloadButton > button:active {{
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 8px {RUST}66 !important;
+}}
+
+/* Métricas — cards refinados com hover */
 [data-testid="metric-container"] {{
-    background:linear-gradient(135deg,{CARD},{LNAVY}) !important;
-    border:1px solid {RUST}44 !important; border-radius:12px !important; padding:16px !important;
+    background: linear-gradient(135deg, {CARD} 0%, {LNAVY} 100%) !important;
+    border: 1px solid {RUST}44 !important;
+    border-radius: 14px !important;
+    padding: 18px 16px !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2) !important;
+    transition: all 0.3s ease !important;
 }}
-[data-testid="metric-container"] label {{ color:{CREAM} !important; font-size:0.8em !important; text-transform:uppercase; letter-spacing:0.5px; }}
-[data-testid="metric-container"] [data-testid="stMetricValue"] {{ color:{WHITE} !important; font-size:1.6em !important; font-weight:700 !important; }}
-[data-testid="metric-container"] [data-testid="stMetricDelta"] {{ color:{CREAM} !important; }}
-.rw-card {{ background:linear-gradient(135deg,{CARD},{LNAVY}); border:1px solid {RUST}44; border-radius:14px; padding:18px 20px; margin-bottom:10px; }}
-.rw-card-green {{ background:linear-gradient(135deg,#0D2B1A,#1A4030); border:1px solid {GREEN}66; border-radius:14px; padding:18px 20px; margin-bottom:10px; }}
-.rw-section {{ background:linear-gradient(90deg,{RUST}CC,{RUST}66); color:{WHITE}; padding:10px 20px; border-radius:8px; font-size:1em; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; margin:20px 0 10px 0; }}
-.rw-total {{ background:linear-gradient(135deg,{RUST},{RUST2}); border-radius:14px; padding:24px; text-align:center; margin:18px 0; box-shadow:0 8px 32px {RUST}44; }}
-.rw-total h2 {{ color:{WHITE}; margin:0; font-size:2.5em; font-weight:700; }}
-.rw-total p  {{ color:{CREAM}; margin:6px 0 0 0; font-size:1em; }}
-.rw-gain {{ background:linear-gradient(135deg,{GREEN}33,{GREEN}11); border:1px solid {GREEN}66; border-radius:14px; padding:24px; text-align:center; margin:18px 0; }}
-.rw-gain h2 {{ color:#5DBA8A; margin:0; font-size:2.3em; font-weight:700; }}
-.rw-gain p  {{ color:{CREAM}; margin:6px 0 0 0; }}
-.rw-info {{ background:{LNAVY}; border-left:3px solid {RUST}; padding:12px 16px; border-radius:0 8px 8px 0; margin:8px 0; }}
-.rw-info p {{ color:{CREAM}; margin:0; font-size:0.9em; }}
-.badge {{ display:inline-block; background:{RUST}33; color:{CREAM}; border:1px solid {RUST}66; border-radius:20px; padding:3px 10px; font-size:0.78em; margin:2px; }}
-h1, h2, h3 {{ color:{WHITE} !important; }}
-p, .stMarkdown p {{ color:{WHITE}; }}
-hr {{ border-color:{RUST}44 !important; margin:16px 0 !important; }}
+[data-testid="metric-container"]:hover {{
+    border-color: {RUST}88 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35) !important;
+}}
+[data-testid="metric-container"] label {{
+    color: {CREAM} !important;
+    font-size: 0.72em !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.6px !important;
+    font-weight: 600 !important;
+}}
+[data-testid="metric-container"] [data-testid="stMetricValue"] {{
+    color: {WHITE} !important;
+    font-size: 1.55em !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.5px !important;
+}}
+[data-testid="metric-container"] [data-testid="stMetricDelta"] {{ color: #5DBA8A !important; }}
+
+/* Cards customizados RedWood */
+.rw-card {{
+    background: linear-gradient(135deg, {CARD} 0%, {LNAVY} 100%);
+    border: 1px solid {RUST}44;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+    transition: all 0.25s ease;
+}}
+.rw-card:hover {{
+    border-color: {RUST}88;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}}
+.rw-card-green {{
+    background: linear-gradient(135deg, #0D2B1A 0%, #1A4030 100%);
+    border: 1px solid {GREEN}66;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 14px rgba(46,125,85,0.18);
+    transition: all 0.25s ease;
+}}
+.rw-card-green:hover {{
+    border-color: {GREEN};
+    box-shadow: 0 6px 22px rgba(46,125,85,0.3);
+}}
+
+/* Header de seção */
+.rw-section {{
+    background: linear-gradient(90deg, {RUST} 0%, {RUST2} 50%, {RUST}88 100%);
+    color: {WHITE};
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-size: 0.95em;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin: 22px 0 12px 0;
+    box-shadow: 0 4px 14px {RUST}55;
+    border-left: 4px solid {WHITE}55;
+}}
+
+/* Total card — destaque máximo com brilho */
+.rw-total {{
+    background: linear-gradient(135deg, {RUST} 0%, {RUST2} 50%, #5C2018 100%);
+    border-radius: 18px;
+    padding: 28px;
+    text-align: center;
+    margin: 20px 0;
+    box-shadow:
+        0 12px 40px {RUST}66,
+        0 0 0 1px {RUST}88,
+        inset 0 1px 0 rgba(255,255,255,0.15);
+    position: relative;
+    overflow: hidden;
+}}
+.rw-total::before {{
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+    animation: shimmer 8s ease-in-out infinite;
+    pointer-events: none;
+}}
+@keyframes shimmer {{
+    0%, 100% {{ transform: translate(-30%, -30%); }}
+    50% {{ transform: translate(30%, 30%); }}
+}}
+.rw-total h2 {{ color: {WHITE} !important; margin: 0 !important; font-size: 2.6em !important; font-weight: 800 !important; letter-spacing: -1px !important; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }}
+.rw-total p {{ color: {CREAM} !important; margin: 6px 0 0 0 !important; font-size: 0.95em !important; }}
+
+/* Gain card — verde com brilho sutil */
+.rw-gain {{
+    background: linear-gradient(135deg, {GREEN}33 0%, {GREEN}11 100%);
+    border: 1px solid {GREEN}66;
+    border-radius: 16px;
+    padding: 26px;
+    text-align: center;
+    margin: 18px 0;
+    box-shadow: 0 8px 28px rgba(46,125,85,0.25), inset 0 1px 0 rgba(93,186,138,0.15);
+}}
+.rw-gain h2 {{ color: #5DBA8A !important; margin: 0 !important; font-size: 2.4em !important; font-weight: 800 !important; letter-spacing: -0.5px !important; }}
+.rw-gain p {{ color: {CREAM} !important; margin: 6px 0 0 0 !important; }}
+
+/* Info banner */
+.rw-info {{
+    background: {LNAVY};
+    border-left: 3px solid {RUST};
+    padding: 12px 16px;
+    border-radius: 0 10px 10px 0;
+    margin: 8px 0;
+}}
+.rw-info p {{ color: {CREAM} !important; margin: 0 !important; font-size: 0.9em !important; }}
+
+/* Badge */
+.badge {{
+    display: inline-block;
+    background: linear-gradient(135deg, {RUST}33, {RUST}55);
+    color: {WHITE};
+    border: 1px solid {RUST}88;
+    border-radius: 20px;
+    padding: 3px 11px;
+    font-size: 0.76em;
+    font-weight: 600;
+    margin: 2px;
+}}
+
+/* Tipografia */
+h1 {{
+    color: {WHITE} !important;
+    font-weight: 800 !important;
+    letter-spacing: -1px !important;
+    background: linear-gradient(135deg, {WHITE} 0%, {CREAM} 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}}
+h2, h3 {{ color: {WHITE} !important; font-weight: 700 !important; }}
+p, .stMarkdown p {{ color: {WHITE}; }}
+hr {{
+    border: none !important;
+    height: 1px !important;
+    background: linear-gradient(90deg, transparent, {RUST}66, transparent) !important;
+    margin: 20px 0 !important;
+}}
+
+/* Caption */
+[data-testid="stCaptionContainer"], .stCaption, small {{
+    color: {CREAM} !important;
+    opacity: 0.85 !important;
+}}
+
+/* Expander/accordion (caso use) */
+.streamlit-expanderHeader, [data-testid="stExpander"] {{
+    background: {LNAVY} !important;
+    border: 1px solid {RUST}44 !important;
+    border-radius: 10px !important;
+}}
+
+/* Scrollbar custom */
+::-webkit-scrollbar {{ width: 10px; height: 10px; }}
+::-webkit-scrollbar-track {{ background: {NAVY}; }}
+::-webkit-scrollbar-thumb {{
+    background: linear-gradient(180deg, {RUST}88, {RUST2}88);
+    border-radius: 10px;
+    border: 2px solid {NAVY};
+}}
+::-webkit-scrollbar-thumb:hover {{ background: linear-gradient(180deg, {RUST}, {RUST2}); }}
+
+/* Toolbar/header do streamlit — discreto */
+[data-testid="stHeader"] {{ background: transparent !important; }}
+[data-testid="stToolbar"] {{ display: none !important; }}
+
+/* Animação de entrada para cards */
+@keyframes fadeInUp {{
+    from {{ opacity: 0; transform: translateY(10px); }}
+    to {{ opacity: 1; transform: translateY(0); }}
+}}
+.rw-card, .rw-card-green, .rw-total, .rw-gain, [data-testid="metric-container"] {{
+    animation: fadeInUp 0.4s ease-out;
+}}
 </style>
 """, unsafe_allow_html=True)
 
