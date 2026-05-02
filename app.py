@@ -157,7 +157,7 @@ def gerar_pdf_interno(empresa_nome, empresa_email, cliente_nome, projeto_nome,
                       total_horas_proj, dados_cons,
                       mes_ref, ano_ref, logo_path,
                       custos_viagem=None, custos_terceiros=None, custos_marketing=None,
-                      custo_extras=0.0):
+                      custo_extras=0.0, empresa_cnpj="", imposto=0.0, aliquota_imposto=0):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4,
         rightMargin=2*cm, leftMargin=2*cm, topMargin=2.5*cm, bottomMargin=2*cm)
@@ -187,9 +187,10 @@ def gerar_pdf_interno(empresa_nome, empresa_email, cliente_nome, projeto_nome,
 
     fib_img = RLImage(FIB, width=3.8*cm, height=2.35*cm, kind="proportional") if os.path.exists(FIB) else Spacer(1, 1)
 
+    cnpj_txt = f"CNPJ: {empresa_cnpj}  ·  " if empresa_cnpj else ""
     info = [
         Paragraph(empresa_nome or "RedWood Estratégia & Impacto", s_title),
-        Paragraph(empresa_email or "", s_sub),
+        Paragraph(f"{empresa_email or ''}{'  ·  ' if empresa_email and empresa_cnpj else ''}{cnpj_txt.rstrip('  · ')}", s_sub),
         Spacer(1, 4),
         Paragraph("Relatório Interno de Custos e Ganhos",
                   sty("PT", fontSize=11, textColor=C_RUST, fontName="Helvetica-Bold")),
@@ -269,7 +270,9 @@ def gerar_pdf_interno(empresa_nome, empresa_email, cliente_nome, projeto_nome,
     if tm > 0:
         rows_comp.append(["Marketing",  fmt(tm), f"{tm/valor_total_proj*100:.1f}%" if valor_total_proj else "0%"])
     rows_comp += [
-        ["Margem de Lucro",       fmt(valor_margem),     f"{valor_margem/valor_total_proj*100:.1f}%"     if valor_total_proj else "0%"],
+        ["Margem de Lucro",       fmt(valor_margem), f"{valor_margem/valor_total_proj*100:.1f}%" if valor_total_proj else "0%"],
+        [f"Impostos ({aliquota_imposto}%)", fmt(imposto), f"{imposto/valor_total_proj*100:.1f}%"  if valor_total_proj else "0%"],
+        ["LUCRO LÍQUIDO",         fmt(lucro_liq),    f"{lucro_liq/valor_total_proj*100:.1f}%"    if valor_total_proj else "0%"],
         ["RECEITA TOTAL",         fmt(valor_total_proj), "100,0%"],
     ]
     t1 = dtbl(["Componente", "Valor (R$)", "% da Receita"], rows_comp,
@@ -362,18 +365,22 @@ def gerar_pdf_interno(empresa_nome, empresa_email, cliente_nome, projeto_nome,
     # 7. Resultado final
     elems.append(sec_hdr("7. RESULTADO FINAL DA EMPRESA"))
     elems.append(Spacer(1, 0.2*cm))
+    s_imp = sty("TI", fontSize=10, textColor=colors.HexColor("#CC4444"), alignment=TA_CENTER)
+    s_imp_v = sty("TV3", fontSize=14, textColor=colors.HexColor("#CC4444"), fontName="Helvetica-Bold", alignment=TA_CENTER)
     tb = Table([
         [Paragraph("RECEITA TOTAL", s_tl), Paragraph(fmt(valor_total_proj), s_tv)],
+        [Paragraph(f"IMPOSTOS ({aliquota_imposto}%)", s_imp), Paragraph(fmt(imposto), s_imp_v)],
         [Paragraph("LUCRO LÍQUIDO DA EMPRESA", sty("TL2", fontSize=10, textColor=colors.HexColor("#5DBA8A"), alignment=TA_CENTER)),
-         Paragraph(f"{fmt(lucro_liq)}  ({margem_pct}%)", s_tv2)],
+         Paragraph(fmt(lucro_liq), s_tv2)],
     ], colWidths=[W/2, W/2])
     tb.setStyle(TableStyle([
         ("BACKGROUND",(0,0),(1,0),C_RUST),
-        ("BACKGROUND",(0,1),(1,1),colors.HexColor("#0D2B1A")),
-        ("TOPPADDING",(0,0),(-1,-1),16), ("BOTTOMPADDING",(0,0),(-1,-1),16),
+        ("BACKGROUND",(0,1),(1,1),colors.HexColor("#2D0A0A")),
+        ("BACKGROUND",(0,2),(1,2),colors.HexColor("#0D2B1A")),
+        ("TOPPADDING",(0,0),(-1,-1),14), ("BOTTOMPADDING",(0,0),(-1,-1),14),
         ("LEFTPADDING",(0,0),(-1,-1),20), ("RIGHTPADDING",(0,0),(-1,-1),20),
         ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
-        ("LINEBELOW",(0,0),(-1,0),1,C_NAVY),
+        ("LINEBELOW",(0,0),(-1,1),1,C_NAVY),
     ]))
     elems += [tb, Spacer(1, 0.3*cm)]
 
@@ -388,7 +395,8 @@ def gerar_pdf_interno(empresa_nome, empresa_email, cliente_nome, projeto_nome,
 
 def gerar_pdf_cliente(empresa_nome, empresa_email, cliente_nome, cliente_email,
                       projeto_nome, projeto_descricao, etapas, consultores,
-                      valor_total, mes_ref, ano_ref, logo_path, observacoes):
+                      valor_total, mes_ref, ano_ref, logo_path, observacoes,
+                      empresa_cnpj=""):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4,
         rightMargin=2*cm, leftMargin=2*cm, topMargin=2.5*cm, bottomMargin=2*cm)
@@ -418,9 +426,10 @@ def gerar_pdf_cliente(empresa_nome, empresa_email, cliente_nome, cliente_email,
 
     fib_img = RLImage(FIB, width=3.8*cm, height=2.35*cm, kind="proportional") if os.path.exists(FIB) else Spacer(1, 1)
 
+    cnpj_line = f"CNPJ: {empresa_cnpj}" if empresa_cnpj else ""
     info = [
         Paragraph(empresa_nome or "RedWood Estratégia & Impacto", s_title),
-        Paragraph(empresa_email or "", s_sub),
+        Paragraph("  ·  ".join(filter(None, [empresa_email, cnpj_line])), s_sub),
         Spacer(1, 4),
         Paragraph("Proposta Técnica e Comercial",
                   sty("PT", fontSize=11, textColor=C_RUST, fontName="Helvetica-Bold")),
@@ -557,6 +566,10 @@ with st.sidebar:
     st.markdown("---")
     st.markdown(f"<p style='color:{CREAM};font-weight:600;font-size:0.85em;'>MARGEM DE LUCRO</p>", unsafe_allow_html=True)
     margem_pct = st.slider("Margem (%)", 0, 100, 30, 5, label_visibility="collapsed")
+    st.markdown("---")
+    st.markdown(f"<p style='color:{CREAM};font-weight:600;font-size:0.85em;'>IMPOSTOS SOBRE RECEITA</p>", unsafe_allow_html=True)
+    aliquota_imposto = st.slider("Impostos (%)", 0, 40, 12, 1, label_visibility="collapsed")
+    st.markdown(f"<p style='color:{CREAM};font-size:0.75em;margin-top:2px;'>Ex: Simples Nacional, ISS, PIS/COFINS...</p>", unsafe_allow_html=True)
 
 st.markdown(
     f"<h1 style='color:{WHITE};font-size:2em;margin-bottom:4px;'>Precificação de Projetos</h1>"
@@ -578,6 +591,7 @@ with tab1:
         st.markdown("<div class='rw-section'>Dados da Empresa</div>", unsafe_allow_html=True)
         empresa_nome  = st.text_input("Nome da empresa",  value="RedWood Estratégia & Impacto", key="empresa_nome")
         empresa_email = st.text_input("E-mail", value="contato@redwoodimpacto.com.br", key="empresa_email")
+        empresa_cnpj  = st.text_input("CNPJ", value="", key="empresa_cnpj", placeholder="00.000.000/0001-00")
 
         st.markdown("<div class='rw-section'>Custos Fixos Mensais</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='rw-info'><p>Rateados proporcionalmente ao projeto.</p></div>", unsafe_allow_html=True)
@@ -777,13 +791,14 @@ with tab3:
 
     st.markdown("<div class='rw-section'>Resultado da Empresa</div>", unsafe_allow_html=True)
     ca, cb = st.columns(2)
-    lucro_liq = valor_total_proj - custo_labor - fixos_alocados - custo_extras
+    imposto   = valor_total_proj * (aliquota_imposto / 100)
+    lucro_liq = valor_total_proj - custo_labor - fixos_alocados - custo_extras - imposto
     receita_h = valor_total_proj / total_horas_proj if total_horas_proj > 0 else 0
     with ca:
         st.markdown(
             f"<div class='rw-gain'><p>LUCRO LÍQUIDO DA EMPRESA</p>"
             f"<h2>{fmt(lucro_liq)}</h2>"
-            f"<p>Margem {margem_pct}% sobre custo base de {fmt(custo_base)}</p>"
+            f"<p>Receita {fmt(valor_total_proj)}  ·  Impostos ({aliquota_imposto}%) {fmt(imposto)}</p>"
             f"</div>", unsafe_allow_html=True)
     with cb:
         st.markdown(
@@ -795,8 +810,9 @@ with tab3:
             f"<p style='color:{WHITE};margin:2px 0;'>Deslocamento & Viagem: <b>{fmt(custo_viagem)}</b></p>"
             f"<p style='color:{WHITE};margin:2px 0;'>Terceiros: <b>{fmt(custo_terceiros)}</b></p>"
             f"<p style='color:{WHITE};margin:2px 0;'>Marketing: <b>{fmt(custo_marketing)}</b></p>"
+            f"<p style='color:{RUST};margin:2px 0;'>Impostos ({aliquota_imposto}%): <b>{fmt(imposto)}</b></p>"
             f"<p style='color:{WHITE};margin:2px 0;'>Receita por hora: <b>{fmt(receita_h)}/h</b></p>"
-            f"<p style='color:#5DBA8A;margin:8px 0 0 0;font-weight:700;font-size:1.1em;'>Lucro: {fmt(lucro_liq)}</p>"
+            f"<p style='color:#5DBA8A;margin:8px 0 0 0;font-weight:700;font-size:1.1em;'>Lucro líquido: {fmt(lucro_liq)}</p>"
             f"</div>", unsafe_allow_html=True)
 
     # Percentuais visuais na tela
@@ -806,15 +822,16 @@ with tab3:
     TEAL   = "#1F7A7A"
     if valor_total_proj > 0:
         itens_pct = [
-            ("Labor (Consultores)",    custo_labor,    RUST),
-            ("Custos Fixos Rateados",  fixos_alocados, LNAVY),
-            ("Deslocamento & Viagem",  custo_viagem,   ORANGE),
-            ("Terceiros",              custo_terceiros, PURPLE),
-            ("Marketing",              custo_marketing, TEAL),
-            ("Margem de Lucro",        valor_margem,   GREEN),
+            ("Labor (Consultores)",    custo_labor,     RUST),
+            ("Custos Fixos Rateados",  fixos_alocados,  LNAVY),
+            ("Deslocamento & Viagem",  custo_viagem,    ORANGE),
+            ("Terceiros",              custo_terceiros,  PURPLE),
+            ("Marketing",              custo_marketing,  TEAL),
+            (f"Impostos ({aliquota_imposto}%)", imposto, "#8B0000"),
+            ("Lucro Líquido",          lucro_liq,       GREEN),
         ]
         for label, valor, cor in itens_pct:
-            if valor <= 0 and label not in ("Labor (Consultores)", "Margem de Lucro"):
+            if valor <= 0 and label not in ("Labor (Consultores)", "Lucro Líquido"):
                 continue
             pct = valor / valor_total_proj * 100
             st.markdown(
@@ -862,6 +879,9 @@ with tab3:
                 custos_terceiros=st.session_state.get("custos_terceiros",[]),
                 custos_marketing=st.session_state.get("custos_marketing",[]),
                 custo_extras=custo_extras,
+                empresa_cnpj=st.session_state.get("empresa_cnpj",""),
+                imposto=imposto,
+                aliquota_imposto=aliquota_imposto,
             )
             nome_int = f"Interno_{(st.session_state.get('proj_nome') or 'Projeto').replace(' ','_')}_{mes_ref}_{ano_ref}.pdf"
             st.download_button(
@@ -939,6 +959,7 @@ with tab4:
                 ano_ref=ano_ref,
                 logo_path=LOGO_V,
                 observacoes=observacoes_pdf,
+                empresa_cnpj=st.session_state.get("empresa_cnpj",""),
             )
             nome_arq = f"Proposta_{(st.session_state.get('cli_nome') or 'Cliente').replace(' ','_')}_{mes_ref}_{ano_ref}.pdf"
             st.download_button(
