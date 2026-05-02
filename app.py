@@ -31,6 +31,7 @@ GREEN = "#2E7D55"
 BASE   = os.path.dirname(os.path.abspath(__file__))
 LOGO_H = os.path.join(BASE, "assets", "logo_redwood_white.png")
 LOGO_V = os.path.join(BASE, "assets", "logo_redwood_vertical.png")
+FIB    = os.path.join(BASE, "assets", "fibonacci.png")
 
 st.markdown(f"""
 <style>
@@ -140,6 +141,8 @@ def gerar_pdf_interno(empresa_nome, empresa_email, cliente_nome, projeto_nome,
     else:
         logo = Paragraph("<b>RedWood</b>", sty("LH", textColor=C_WHITE, fontSize=18))
 
+    fib_img = RLImage(FIB, width=3.8*cm, height=2.35*cm, kind="proportional") if os.path.exists(FIB) else Spacer(1, 1)
+
     info = [
         Paragraph(empresa_nome or "RedWood Estratégia & Impacto", s_title),
         Paragraph(empresa_email or "", s_sub),
@@ -148,11 +151,12 @@ def gerar_pdf_interno(empresa_nome, empresa_email, cliente_nome, projeto_nome,
                   sty("PT", fontSize=11, textColor=C_RUST, fontName="Helvetica-Bold")),
         Paragraph(f"Projeto: {projeto_nome or '—'}  ·  Cliente: {cliente_nome or '—'}  ·  {mes_ref}/{ano_ref}", s_sub),
     ]
-    inner = Table([[logo, info]], colWidths=[5*cm, W-5*cm])
+    inner = Table([[logo, info, fib_img]], colWidths=[4.5*cm, W-8.5*cm, 4*cm])
     inner.setStyle(TableStyle([
         ("BACKGROUND",(0,0),(-1,-1),C_NAVY), ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
         ("TOPPADDING",(0,0),(-1,-1),14), ("BOTTOMPADDING",(0,0),(-1,-1),14),
         ("LEFTPADDING",(0,0),(0,-1),10), ("LEFTPADDING",(1,0),(1,-1),20),
+        ("RIGHTPADDING",(2,0),(2,-1),10), ("ALIGN",(2,0),(2,-1),"RIGHT"),
     ]))
     outer = Table([[inner]], colWidths=[W])
     outer.setStyle(TableStyle([("BACKGROUND",(0,0),(-1,-1),C_NAVY),("BOX",(0,0),(-1,-1),2,C_RUST)]))
@@ -305,6 +309,8 @@ def gerar_pdf_cliente(empresa_nome, empresa_email, cliente_nome, cliente_email,
     else:
         logo = Paragraph("<b>RedWood</b>", sty("LH", textColor=C_WHITE, fontSize=18))
 
+    fib_img = RLImage(FIB, width=3.8*cm, height=2.35*cm, kind="proportional") if os.path.exists(FIB) else Spacer(1, 1)
+
     info = [
         Paragraph(empresa_nome or "RedWood Estratégia & Impacto", s_title),
         Paragraph(empresa_email or "", s_sub),
@@ -313,11 +319,12 @@ def gerar_pdf_cliente(empresa_nome, empresa_email, cliente_nome, cliente_email,
                   sty("PT", fontSize=11, textColor=C_RUST, fontName="Helvetica-Bold")),
         Paragraph(f"{mes_ref} / {ano_ref}", s_sub),
     ]
-    inner = Table([[logo, info]], colWidths=[5*cm, W-5*cm])
+    inner = Table([[logo, info, fib_img]], colWidths=[4.5*cm, W-8.5*cm, 4*cm])
     inner.setStyle(TableStyle([
         ("BACKGROUND",(0,0),(-1,-1),C_NAVY), ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
         ("TOPPADDING",(0,0),(-1,-1),14), ("BOTTOMPADDING",(0,0),(-1,-1),14),
         ("LEFTPADDING",(0,0),(0,-1),10), ("LEFTPADDING",(1,0),(1,-1),20),
+        ("RIGHTPADDING",(2,0),(2,-1),10), ("ALIGN",(2,0),(2,-1),"RIGHT"),
     ]))
     outer = Table([[inner]], colWidths=[W])
     outer.setStyle(TableStyle([
@@ -429,6 +436,10 @@ def gerar_pdf_cliente(empresa_nome, empresa_email, cliente_nome, cliente_email,
 with st.sidebar:
     if os.path.exists(LOGO_H):
         st.image(LOGO_H, use_container_width=True)
+    if os.path.exists(FIB):
+        st.markdown("<div style='opacity:0.35;margin-top:4px;'>", unsafe_allow_html=True)
+        st.image(FIB, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("---")
     st.markdown(f"<p style='color:{CREAM};font-size:0.85em;text-align:center;'>Precificação de Projetos</p>", unsafe_allow_html=True)
     st.markdown("---")
