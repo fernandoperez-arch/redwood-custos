@@ -93,6 +93,34 @@ hr {{ border-color:{RUST}44 !important; margin:16px 0 !important; }}
 def fmt(v): return f"R$ {v:,.2f}".replace(",","X").replace(".",",").replace("X",".")
 def fmt_h(h): return f"{h:.1f}h"
 
+def custo_lista_ui(chave, placeholder="Novo item"):
+    upd = []
+    for i, c in enumerate(st.session_state[chave]):
+        ca, cb, cc = st.columns([3, 2, 0.5])
+        with ca: nome_c = st.text_input("", value=c["item"], key=f"{chave}_nome_{i}", label_visibility="collapsed")
+        with cb: val_c  = st.number_input("", value=float(c["valor"]), min_value=0.0, step=10.0,
+                                          key=f"{chave}_val_{i}", label_visibility="collapsed", format="%.2f")
+        with cc: rem    = st.button("x", key=f"{chave}_del_{i}")
+        if not rem: upd.append({"item": nome_c, "valor": val_c})
+    st.session_state[chave] = upd
+    na, nb, nc = st.columns([3, 2, 0.5])
+    with na: n_item = st.text_input("", key=f"{chave}_n_item", placeholder=placeholder, label_visibility="collapsed")
+    with nb: n_val  = st.number_input("", min_value=0.0, step=10.0, key=f"{chave}_n_val",
+                                      label_visibility="collapsed", format="%.2f")
+    with nc:
+        st.write("")
+        if st.button("+", key=f"{chave}_add"):
+            if n_item.strip():
+                st.session_state[chave].append({"item": n_item, "valor": n_val})
+                st.rerun()
+    total = sum(c["valor"] for c in st.session_state[chave])
+    st.markdown(
+        f"<div style='text-align:right;margin-top:4px;'>"
+        f"<span style='color:{CREAM};font-size:0.82em;'>Total: </span>"
+        f"<b style='color:{WHITE};font-size:0.95em;'>{fmt(total)}</b></div>",
+        unsafe_allow_html=True)
+    return total
+
 def init_state():
     if "consultores" not in st.session_state:
         st.session_state["consultores"] = [{"nome": "Fernando Richard", "valor_hora": 300.0}]
@@ -105,6 +133,20 @@ def init_state():
             {"item": "Claude (IA)",             "valor": 120.0},
             {"item": "Contador",                "valor": 400.0},
         ]
+    if "custos_viagem" not in st.session_state:
+        st.session_state["custos_viagem"] = [
+            {"item": "Hospedagem",                        "valor": 0.0},
+            {"item": "Passagem Aérea",                    "valor": 0.0},
+            {"item": "Aluguel de Carro",                  "valor": 0.0},
+            {"item": "Combustível",                       "valor": 0.0},
+            {"item": "Ajuda de Custo (dentro do estado)", "valor": 0.0},
+            {"item": "Ajuda de Custo (fora do estado)",   "valor": 0.0},
+            {"item": "Outros Deslocamentos",              "valor": 0.0},
+        ]
+    if "custos_terceiros" not in st.session_state:
+        st.session_state["custos_terceiros"] = []
+    if "custos_marketing" not in st.session_state:
+        st.session_state["custos_marketing"] = []
 
 init_state()
 
@@ -113,7 +155,9 @@ def gerar_pdf_interno(empresa_nome, empresa_email, cliente_nome, projeto_nome,
                       custo_labor, fixos_alocados, valor_margem,
                       valor_total_proj, lucro_liq, margem_pct,
                       total_horas_proj, dados_cons,
-                      mes_ref, ano_ref, logo_path):
+                      mes_ref, ano_ref, logo_path,
+                      custos_viagem=None, custos_terceiros=None, custos_marketing=None,
+                      custo_extras=0.0):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4,
         rightMargin=2*cm, leftMargin=2*cm, topMargin=2.5*cm, bottomMargin=2*cm)
@@ -203,15 +247,30 @@ def gerar_pdf_interno(empresa_nome, empresa_email, cliente_nome, projeto_nome,
         bar = "█" * filled + "░" * (20 - filled)
         return f"{bar}  {pct:.1f}%"
 
+    custos_viagem    = custos_viagem    or []
+    custos_terceiros = custos_terceiros or []
+    custos_marketing = custos_marketing or []
+    tv = sum(c["valor"] for c in custos_viagem)
+    tt = sum(c["valor"] for c in custos_terceiros)
+    tm = sum(c["valor"] for c in custos_marketing)
+
     # 1. Resumo Financeiro com %
     elems.append(sec_hdr("1. COMPOSIÇÃO DE CUSTOS E RECEITA"))
     elems.append(Spacer(1, 0.2*cm))
-    custo_base = custo_labor + fixos_alocados
+    custo_base = custo_labor + fixos_alocados + custo_extras
     rows_comp = [
-        ["Labor (Consultores)", fmt(custo_labor),   f"{custo_labor/valor_total_proj*100:.1f}%"   if valor_total_proj else "0%"],
+        ["Labor (Consultores)",   fmt(custo_labor),    f"{custo_labor/valor_total_proj*100:.1f}%"    if valor_total_proj else "0%"],
         ["Custos Fixos Rateados", fmt(fixos_alocados), f"{fixos_alocados/valor_total_proj*100:.1f}%" if valor_total_proj else "0%"],
-        ["Margem de Lucro",     fmt(valor_margem),  f"{valor_margem/valor_total_proj*100:.1f}%"  if valor_total_proj else "0%"],
-        ["RECEITA TOTAL",       fmt(valor_total_proj), "100,0%"],
+    ]
+    if tv > 0:
+        rows_comp.append(["Deslocamento & Viagem", fmt(tv), f"{tv/valor_total_proj*100:.1f}%" if valor_total_proj else "0%"])
+    if tt > 0:
+        rows_comp.append(["Terceiros",  fmt(tt), f"{tt/valor_total_proj*100:.1f}%" if valor_total_proj else "0%"])
+    if tm > 0:
+        rows_comp.append(["Marketing",  fmt(tm), f"{tm/valor_total_proj*100:.1f}%" if valor_total_proj else "0%"])
+    rows_comp += [
+        ["Margem de Lucro",       fmt(valor_margem),     f"{valor_margem/valor_total_proj*100:.1f}%"     if valor_total_proj else "0%"],
+        ["RECEITA TOTAL",         fmt(valor_total_proj), "100,0%"],
     ]
     t1 = dtbl(["Componente", "Valor (R$)", "% da Receita"], rows_comp,
               [9*cm, 4.5*cm, 3.5*cm], last_bold=True)
@@ -252,8 +311,56 @@ def gerar_pdf_interno(empresa_nome, empresa_email, cliente_nome, projeto_nome,
               rows_fix, [5.5*cm, 2.8*cm, 2.2*cm, 3.5*cm, 3*cm], last_bold=True)
     elems += [t3, Spacer(1, 0.4*cm)]
 
-    # 4. Resultado final
-    elems.append(sec_hdr("4. RESULTADO FINAL DA EMPRESA"))
+    # 4. Deslocamento & Viagem
+    if tv > 0 or custos_viagem:
+        elems.append(sec_hdr("4. DESLOCAMENTO & VIAGEM"))
+        elems.append(Spacer(1, 0.2*cm))
+        rows_v = [[c["item"], fmt(c["valor"]),
+                   f"{c['valor']/tv*100:.1f}%" if tv else "0%",
+                   f"{c['valor']/valor_total_proj*100:.1f}%" if valor_total_proj else "0%"]
+                  for c in custos_viagem if c["valor"] > 0]
+        if rows_v:
+            rows_v.append(["TOTAL", fmt(tv), "100,0%",
+                           f"{tv/valor_total_proj*100:.1f}%" if valor_total_proj else "0%"])
+            t4 = dtbl(["Item", "Valor (R$)", "% Deslocamento", "% da Receita"],
+                      rows_v, [7*cm, 3.5*cm, 3.5*cm, 3*cm], last_bold=True)
+            elems.append(t4)
+        elems.append(Spacer(1, 0.4*cm))
+
+    # 5. Terceiros
+    if tt > 0 or custos_terceiros:
+        elems.append(sec_hdr("5. CUSTOS COM TERCEIROS"))
+        elems.append(Spacer(1, 0.2*cm))
+        rows_t = [[c["item"], fmt(c["valor"]),
+                   f"{c['valor']/tt*100:.1f}%" if tt else "0%",
+                   f"{c['valor']/valor_total_proj*100:.1f}%" if valor_total_proj else "0%"]
+                  for c in custos_terceiros if c["valor"] > 0]
+        if rows_t:
+            rows_t.append(["TOTAL", fmt(tt), "100,0%",
+                           f"{tt/valor_total_proj*100:.1f}%" if valor_total_proj else "0%"])
+            t5 = dtbl(["Item", "Valor (R$)", "% Terceiros", "% da Receita"],
+                      rows_t, [7*cm, 3.5*cm, 3.5*cm, 3*cm], last_bold=True)
+            elems.append(t5)
+        elems.append(Spacer(1, 0.4*cm))
+
+    # 6. Marketing
+    if tm > 0 or custos_marketing:
+        elems.append(sec_hdr("6. CUSTOS DE MARKETING"))
+        elems.append(Spacer(1, 0.2*cm))
+        rows_m = [[c["item"], fmt(c["valor"]),
+                   f"{c['valor']/tm*100:.1f}%" if tm else "0%",
+                   f"{c['valor']/valor_total_proj*100:.1f}%" if valor_total_proj else "0%"]
+                  for c in custos_marketing if c["valor"] > 0]
+        if rows_m:
+            rows_m.append(["TOTAL", fmt(tm), "100,0%",
+                           f"{tm/valor_total_proj*100:.1f}%" if valor_total_proj else "0%"])
+            t6 = dtbl(["Item", "Valor (R$)", "% Marketing", "% da Receita"],
+                      rows_m, [7*cm, 3.5*cm, 3.5*cm, 3*cm], last_bold=True)
+            elems.append(t6)
+        elems.append(Spacer(1, 0.4*cm))
+
+    # 7. Resultado final
+    elems.append(sec_hdr("7. RESULTADO FINAL DA EMPRESA"))
     elems.append(Spacer(1, 0.2*cm))
     tb = Table([
         [Paragraph("RECEITA TOTAL", s_tl), Paragraph(fmt(valor_total_proj), s_tv)],
@@ -588,6 +695,27 @@ with tab2:
                         etapas_manter.append(e)
             st.session_state["etapas"] = etapas_manter
 
+    st.markdown("---")
+    st.markdown("<div class='rw-section'>Custos Adicionais do Projeto</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div class='rw-info'><p>Custos variáveis específicos deste projeto — somados ao valor final.</p></div>",
+        unsafe_allow_html=True)
+
+    cv1, cv2, cv3 = st.columns(3)
+    with cv1:
+        st.markdown(f"<p style='color:{CREAM};font-weight:700;margin:0 0 8px 0;'>Deslocamento & Viagem</p>", unsafe_allow_html=True)
+        total_viagem = custo_lista_ui("custos_viagem", "Ex: Táxi, pedágio...")
+    with cv2:
+        st.markdown(f"<p style='color:{CREAM};font-weight:700;margin:0 0 8px 0;'>Terceiros</p>", unsafe_allow_html=True)
+        total_terceiros = custo_lista_ui("custos_terceiros", "Ex: Designer, fotógrafo...")
+    with cv3:
+        st.markdown(f"<p style='color:{CREAM};font-weight:700;margin:0 0 8px 0;'>Marketing</p>", unsafe_allow_html=True)
+        total_marketing = custo_lista_ui("custos_marketing", "Ex: Anúncios, materiais...")
+
+    st.session_state["total_viagem"]    = total_viagem
+    st.session_state["total_terceiros"] = total_terceiros
+    st.session_state["total_marketing"] = total_marketing
+
 with tab3:
     consultores   = st.session_state["consultores"]
     etapas        = st.session_state["etapas"]
@@ -604,23 +732,29 @@ with tab3:
     custo_labor      = sum(d["ganho"] for d in dados_cons)
     proporcao        = min(total_horas_proj / max(horas_mes_tot, 1), 1.0)
     fixos_alocados   = total_fixos * proporcao
-    custo_base       = custo_labor + fixos_alocados
+    custo_viagem     = st.session_state.get("total_viagem", 0.0)
+    custo_terceiros  = st.session_state.get("total_terceiros", 0.0)
+    custo_marketing  = st.session_state.get("total_marketing", 0.0)
+    custo_extras     = custo_viagem + custo_terceiros + custo_marketing
+    custo_base       = custo_labor + fixos_alocados + custo_extras
     valor_margem     = custo_base * (margem_pct / 100)
     valor_total_proj = custo_base + valor_margem
     st.session_state["valor_total_proj"] = valor_total_proj
 
     st.markdown("<div class='rw-section'>Resumo do Projeto</div>", unsafe_allow_html=True)
-    m1, m2, m3, m4 = st.columns(4)
+    m1, m2, m3, m4, m5 = st.columns(5)
     with m1: st.metric("Total de Horas",       fmt_h(total_horas_proj))
-    with m2: st.metric("Custo de Labor",        fmt(custo_labor))
-    with m3: st.metric("Custos Fixos Rateados", fmt(fixos_alocados))
-    with m4: st.metric("Margem de Lucro",       fmt(valor_margem), delta=f"{margem_pct}%")
+    with m2: st.metric("Labor",                fmt(custo_labor))
+    with m3: st.metric("Fixos Rateados",       fmt(fixos_alocados))
+    with m4: st.metric("Extras do Projeto",    fmt(custo_extras))
+    with m5: st.metric("Margem de Lucro",      fmt(valor_margem), delta=f"{margem_pct}%")
 
     st.markdown(
         f"<div class='rw-total'>"
         f"<p>VALOR TOTAL PARA O CLIENTE</p>"
         f"<h2>{fmt(valor_total_proj)}</h2>"
-        f"<p>Labor {fmt(custo_labor)}  ·  Fixos {fmt(fixos_alocados)}  ·  Margem {fmt(valor_margem)}</p>"
+        f"<p>Labor {fmt(custo_labor)}  ·  Fixos {fmt(fixos_alocados)}  ·  "
+        f"Extras {fmt(custo_extras)}  ·  Margem {fmt(valor_margem)}</p>"
         f"</div>", unsafe_allow_html=True)
 
     st.markdown("<div class='rw-section'>Ganhos por Consultor</div>", unsafe_allow_html=True)
@@ -643,7 +777,7 @@ with tab3:
 
     st.markdown("<div class='rw-section'>Resultado da Empresa</div>", unsafe_allow_html=True)
     ca, cb = st.columns(2)
-    lucro_liq = valor_total_proj - custo_labor - fixos_alocados
+    lucro_liq = valor_total_proj - custo_labor - fixos_alocados - custo_extras
     receita_h = valor_total_proj / total_horas_proj if total_horas_proj > 0 else 0
     with ca:
         st.markdown(
@@ -656,21 +790,32 @@ with tab3:
             f"<div class='rw-card' style='border-color:{RUST}88;'>"
             f"<p style='color:{CREAM};margin:0 0 8px 0;font-size:0.85em;'>DETALHAMENTO</p>"
             f"<p style='color:{WHITE};margin:2px 0;'>Receita total: <b>{fmt(valor_total_proj)}</b></p>"
-            f"<p style='color:{WHITE};margin:2px 0;'>Custo de labor: <b>{fmt(custo_labor)}</b></p>"
+            f"<p style='color:{WHITE};margin:2px 0;'>Labor: <b>{fmt(custo_labor)}</b></p>"
             f"<p style='color:{WHITE};margin:2px 0;'>Custos fixos alocados: <b>{fmt(fixos_alocados)}</b></p>"
+            f"<p style='color:{WHITE};margin:2px 0;'>Deslocamento & Viagem: <b>{fmt(custo_viagem)}</b></p>"
+            f"<p style='color:{WHITE};margin:2px 0;'>Terceiros: <b>{fmt(custo_terceiros)}</b></p>"
+            f"<p style='color:{WHITE};margin:2px 0;'>Marketing: <b>{fmt(custo_marketing)}</b></p>"
             f"<p style='color:{WHITE};margin:2px 0;'>Receita por hora: <b>{fmt(receita_h)}/h</b></p>"
             f"<p style='color:#5DBA8A;margin:8px 0 0 0;font-weight:700;font-size:1.1em;'>Lucro: {fmt(lucro_liq)}</p>"
             f"</div>", unsafe_allow_html=True)
 
     # Percentuais visuais na tela
     st.markdown("<div class='rw-section'>Composição Percentual da Receita</div>", unsafe_allow_html=True)
+    ORANGE = "#C97A20"
+    PURPLE = "#6B4FA0"
+    TEAL   = "#1F7A7A"
     if valor_total_proj > 0:
         itens_pct = [
             ("Labor (Consultores)",    custo_labor,    RUST),
             ("Custos Fixos Rateados",  fixos_alocados, LNAVY),
+            ("Deslocamento & Viagem",  custo_viagem,   ORANGE),
+            ("Terceiros",              custo_terceiros, PURPLE),
+            ("Marketing",              custo_marketing, TEAL),
             ("Margem de Lucro",        valor_margem,   GREEN),
         ]
         for label, valor, cor in itens_pct:
+            if valor <= 0 and label not in ("Labor (Consultores)", "Margem de Lucro"):
+                continue
             pct = valor / valor_total_proj * 100
             st.markdown(
                 f"<div style='margin:6px 0;'>"
@@ -713,6 +858,10 @@ with tab3:
                 mes_ref=mes_ref,
                 ano_ref=ano_ref,
                 logo_path=LOGO_V,
+                custos_viagem=st.session_state.get("custos_viagem",[]),
+                custos_terceiros=st.session_state.get("custos_terceiros",[]),
+                custos_marketing=st.session_state.get("custos_marketing",[]),
+                custo_extras=custo_extras,
             )
             nome_int = f"Interno_{(st.session_state.get('proj_nome') or 'Projeto').replace(' ','_')}_{mes_ref}_{ano_ref}.pdf"
             st.download_button(
