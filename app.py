@@ -33,15 +33,14 @@ LOGO_H = os.path.join(BASE, "assets", "logo_redwood_white.png")
 LOGO_V = os.path.join(BASE, "assets", "logo_redwood_vertical.png")
 FIB    = os.path.join(BASE, "assets", "fibonacci.png")
 
-st.markdown(f"""
+st.markdown("""
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons&display=block" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
-<style>
+""", unsafe_allow_html=True)
+
+st.markdown(f"""<style>
 @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons&display=block');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block');
 
 /* Garante que classes de ícones do Streamlit usem a fonte certa (corrige texto "keyboard_double_arrow_left", "arrow_drop_down" etc.) */
 .material-icons, .material-icons-outlined,
